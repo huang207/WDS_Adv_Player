@@ -1,19 +1,22 @@
-import { Assets, AlphaFilter, Graphics} from "pixi.js";
+import { Assets, AlphaFilter, Graphics, Container} from "pixi.js";
 import { Tween } from "tweedle.js";
 import { Spine } from '@esotericsoftware/spine-pixi-v7';
 import { baseAssets } from "../constant/advConstant";
 
-export class AdvTimeElapsedAnimation extends Graphics{
+export class AdvTimeElapsedAnimation extends Container{
 
+    protected _AdvTimeElapsedAnimation : Graphics;
     protected _jugon : Spine | undefined;
     protected aplha_filter = new AlphaFilter();
     protected _spineDuratinon = 3400;
     
     constructor(){
         super();
-        this.beginFill(0xffffff);
-        this.drawRect(0, 0, 1920, 1080);
+        this._AdvTimeElapsedAnimation = new Graphics();
+        this._AdvTimeElapsedAnimation.beginFill(0xffffff);
+        this._AdvTimeElapsedAnimation.drawRect(0, 0, 1920, 1080);
         this.alpha = 0;
+        this.addChild(this._AdvTimeElapsedAnimation);
 
         Assets.load([baseAssets.jugon_progress, baseAssets.jugon_progress_atlas]).then(()=>{
             this._jugon = Spine.from(baseAssets.jugon_progress, baseAssets.jugon_progress_atlas);

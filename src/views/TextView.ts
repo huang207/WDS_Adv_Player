@@ -27,13 +27,17 @@ export class TextView extends IView {
         this._textPanelContainer.alpha = 0;
 
         //phrase text background
-        const panel_texture = Texture.from(baseAssets.serif_window_bg)
+        const TextBoxWidth = 1628;
+        const TextBoxHeight = 248;
+        const panel_texture = Texture.from(baseAssets.serif_window_bg);
         const PhraseTextBox = new NineSlicePlane(panel_texture, 68, 120, 68, 120);
+        this._textPanelContainer.width = TextBoxWidth;
+        this._textPanelContainer.height = TextBoxHeight;
+        this._textPanelContainer.x = (1920 - TextBoxWidth) / 2;
+        this._textPanelContainer.y = 808 //(1080 / 2) + ((PhraseTextBox.height / 2) + 148);
         this._textPanelContainer.addChild(PhraseTextBox);
-        PhraseTextBox.width = 1628;
-        PhraseTextBox.height = 248;
-        PhraseTextBox.x = (1920 - PhraseTextBox.width) / 2;
-        PhraseTextBox.y = 808 //(1080 / 2) + ((PhraseTextBox.height / 2) + 148);
+        PhraseTextBox.width = TextBoxWidth;
+        PhraseTextBox.height = TextBoxHeight;
 
         //phrase text
         this._phrase = new Text('', new TextStyle({
@@ -44,18 +48,24 @@ export class TextView extends IView {
             lineHeight : 50,
             letterSpacing: -1,
         }));
-        PhraseTextBox.addChild(this._phrase);
+        this._textPanelContainer.addChild(this._phrase);
         this._phrase.x = 93.5;
         this._phrase.y = 76;
 
         //spraker background
+        const namePanelWidth = 400;
+        const namePanelHeight = 80;
         const name_panel_texture = Texture.from(baseAssets.name_bg)
+        const namePanelContainer = new Container();
         const name_bg = new NineSlicePlane(name_panel_texture, 56, 0, 19, 62);
-        PhraseTextBox.addChild(name_bg);
-        name_bg.width = 400;
-        name_bg.height = 80;
-        name_bg.x = 188 - (name_bg.width / 2);
-        name_bg.y = -20;
+        this._textPanelContainer.addChild(namePanelContainer);
+        namePanelContainer.width = namePanelWidth;
+        namePanelContainer.height = namePanelHeight;
+        namePanelContainer.x = 188 - (namePanelWidth / 2);
+        namePanelContainer.y = -20;
+        namePanelContainer.addChild(name_bg);
+        name_bg.width = namePanelWidth;
+        name_bg.height = namePanelHeight;
 
         //spraker label
         this._sprakerText = new Text('', new TextStyle({
@@ -65,14 +75,14 @@ export class TextView extends IView {
             letterSpacing: -1,
             // fontVariant : 'small-caps'
         }));
-        name_bg.addChild(this._sprakerText);
+        namePanelContainer.addChild(this._sprakerText);
         this._sprakerText.anchor.set(0.5);
         this._sprakerText.x = 200;
         this._sprakerText.y = 30;
 
         //nextIcon
         this._nextIcon = Sprite.from(baseAssets.icon_next);
-        PhraseTextBox.addChild(this._nextIcon)
+        this._textPanelContainer.addChild(this._nextIcon)
         this._nextIcon.anchor.set(.5);
         this._nextIcon.position.set(1566, 195); //to 210
         this._nextIcon.alpha = 0;
