@@ -7,11 +7,9 @@ const { id, tl, at, renderer } = getUrlParams();
 let app;
 if (renderer) {
     if (renderer.toLocaleLowerCase() === 'gl') {
-        console.log("Using WebGL renderer");
         app = await createApp('webgl');
     }
     else if (renderer.toLocaleLowerCase() === 'gpu') {
-        console.log("Using WebGPU renderer");
         app = await createApp('webgpu');
     }
 }
