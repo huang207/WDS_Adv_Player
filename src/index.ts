@@ -2,13 +2,30 @@ import { getUrlParams } from "./utils/UrlParams";
 import { AdvPlayer } from "./AdvPlayer";
 import { createApp } from "./utils/createApp";
 
-const { id, tl, at } = getUrlParams();
+const { id, tl, at, renderer } = getUrlParams();
 
-const app = await createApp();
+let app;
+if (renderer) {
+    if (renderer.toLocaleLowerCase() === 'gl') {
+        console.log("Using WebGL renderer");
+        app = await createApp('webgl');
+    }
+    else if (renderer.toLocaleLowerCase() === 'gpu') {
+        console.log("Using WebGPU renderer");
+        app = await createApp('webgpu');
+    }
+}
+else {
+    app = await createApp();
+}
 
 const advplayer = AdvPlayer.create(); //create Adv Player
 await advplayer.init(); // init Adv Player
-advplayer.addTo(app.stage);
+if (app) {
+    advplayer.addTo(app.stage);
+} else {
+    throw new Error("Failed to create app.");
+}
 
 // advplayer.loadAndPlay('1000000');
 // advplayer.loadAndPlay('110081');

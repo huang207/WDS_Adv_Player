@@ -58,8 +58,6 @@ export class TextView extends IView {
         this._phrase.y = 76-2;
 
         //spraker background
-        const namePanelWidth = 400;
-        const namePanelHeight = 80;
         const name_panel_texture = Texture.from(baseAssets.name_bg)
         const name_bg = new NineSliceSprite({
             texture : name_panel_texture,
