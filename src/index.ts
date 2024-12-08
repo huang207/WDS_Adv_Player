@@ -4,12 +4,13 @@ import { createApp } from "./utils/createApp";
 
 const { id, tl, at } = getUrlParams();
 
-const app = createApp();
+const app = await createApp();
 
-const advplayer = AdvPlayer.create();
+const advplayer = AdvPlayer.create(); //create Adv Player
+await advplayer.init(); // init Adv Player
 advplayer.addTo(app.stage);
 
-// advplayer.loadAndPlay('2001402');
+// advplayer.loadAndPlay('1000000');
 // advplayer.loadAndPlay('110081');
 // advplayer.loadAndPlay('2001206');
 // advplayer.loadAndPlay('110081'); 
@@ -22,4 +23,3 @@ if (id) {
   let _id = prompt("Please enter the story Id", "1000000");
   _id && advplayer.loadAndPlay(_id, tl, at);
 }
-
