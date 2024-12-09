@@ -5,6 +5,9 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         base: './',
+        build: {
+            target: 'esnext',
+        },
         define: {
             __VERSION__: JSON.stringify(require('./package.json').version),
         },
