@@ -81,7 +81,7 @@ const zhcnReader : TranslateReader = {
 
 const zhcnaiReader : TranslateReader = {
   language : 'zhcnai',
-  url : 'https://raw.githubusercontent.com/huang207/WDS-Translation-Csv-AI/main',
+  url : 'https://raw.githubusercontent.com/huang207/WDS-Translation-Csv/ai',
   async read(epId) : Promise<IEpisodeTranslateModel | undefined> {
     let source = `${this.url}/TranslationCsv/${epId}.csv`;
     const records = await loadCsv<IEpisodeTranslateDetail>(source);
