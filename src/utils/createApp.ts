@@ -8,8 +8,8 @@ export async function createApp(preference: 'webgl' | 'webgpu' = 'webgpu') {
       document.getElementById("WDS")!.remove();
     }
 
-    if(preference != 'webgl' && preference != 'webgpu'){
-        preference = 'webgpu'; // default to webgpu
+    if(preference.toLocaleLowerCase() != 'webgl' && preference.toLocaleLowerCase() != 'webgpu'){
+      preference = 'webgpu'; // default to webgpu
     }
 
     const pixiapp = new Application();
