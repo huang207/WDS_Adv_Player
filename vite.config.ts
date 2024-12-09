@@ -1,5 +1,6 @@
 import path from 'path';
 import { defineConfig } from 'vite'
+import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig(({ command, mode }) => {
 
@@ -7,6 +8,17 @@ export default defineConfig(({ command, mode }) => {
         base: './',
         build: {
             target: 'esnext',
+            outDir: 'dist',
+            emptyOutDir: true,
+            rollupOptions: {
+                output: {
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            return 'vendor';
+                        }
+                    },
+                },
+            },
         },
         define: {
             __VERSION__: JSON.stringify(require('./package.json').version),
