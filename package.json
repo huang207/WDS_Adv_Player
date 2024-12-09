@@ -30,8 +30,7 @@
     "rimraf": "^5.0.1",
     "terser": "^5.19.2",
     "typescript": "^4.6.4",
-    "vite": "^3.2.3",
-    "vite-plugin-top-level-await": "^1.4.4"
+    "vite": "^3.2.3"
   },
   "dependencies": {
     "@esotericsoftware/spine-pixi-v8": "4.2.67",

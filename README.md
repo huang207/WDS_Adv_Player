@@ -14,7 +14,7 @@
 A adventure Player to render the stories for game [ワールドダイスター 夢のステラリウム](https://world-dai-star.com/game).
 
 ## Demo
-[online Demo](https://cpk0521.github.io/WDS_Adv_Player/?id=1000000)
+[online Demo](https://wds-adv-player.207studio.top/?id=1000000)
 
 ## Parameters
 
