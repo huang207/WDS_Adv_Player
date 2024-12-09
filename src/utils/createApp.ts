@@ -1,11 +1,15 @@
 import { Group } from "tweedle.js";
 import { Application, Ticker } from "pixi.js";
 
-export let displaypPeference: 'WebGL' | 'WebGPU';
+export let currenRenderer: string;
 
 export async function createApp(preference: 'webgl' | 'webgpu' = 'webgpu') {
     if (document.getElementById("WDS")) {
       document.getElementById("WDS")!.remove();
+    }
+
+    if(preference != 'webgl' && preference != 'webgpu'){
+        preference = 'webgpu'; // default to webgpu
     }
 
     const pixiapp = new Application();
@@ -16,10 +20,9 @@ export async function createApp(preference: 'webgl' | 'webgpu' = 'webgpu') {
       width: 1920,
       height: 1080,
       backgroundAlpha: 0,
-      // backgroundColor : 0xdddddd,
     });
-  
-    displaypPeference = preference === 'webgpu' ? 'WebGPU' : 'WebGL';
+
+    currenRenderer = pixiapp.renderer.name;
 
     (globalThis as any).__PIXI_APP__ = pixiapp;
   

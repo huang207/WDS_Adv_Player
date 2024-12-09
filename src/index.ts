@@ -4,18 +4,7 @@ import { createApp } from "./utils/createApp";
 
 const { id, tl, at, renderer } = getUrlParams();
 
-let app;
-if (renderer) {
-    if (renderer.toLocaleLowerCase() === 'gl') {
-        app = await createApp('webgl');
-    }
-    else if (renderer.toLocaleLowerCase() === 'gpu') {
-        app = await createApp('webgpu');
-    }
-}
-else {
-    app = await createApp();
-}
+const app = await createApp(<'webgl' | 'webgpu'> renderer);
 
 const advplayer = AdvPlayer.create(); //create Adv Player
 await advplayer.init(); // init Adv Player
