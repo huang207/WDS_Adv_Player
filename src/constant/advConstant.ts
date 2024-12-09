@@ -69,6 +69,11 @@ export const TLFonts = [
         family: "Hiraginosansgb",
         url: "./HiraginoSansGB.ttf",
     },
+    {
+        language: "zhcnai",
+        family: "Hiraginosansgb",
+        url: "./HiraginoSansGB.ttf",
+    },
 ];
 
 export const baseAssetsUrl = "https://raw.githubusercontent.com/wds-sirius/Adv-Resource/main/";

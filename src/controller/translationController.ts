@@ -15,7 +15,7 @@ export interface IEpisodeTranslateDetail {
   translation? : string
 }
 
-export const languageVals = ["en", "zhcn", "zhtw"] as const;
+export const languageVals = ["en", "zhcn", "zhtw", "zhcnai"] as const;
 
 export interface TranslateReader {
     name?: string;
@@ -79,11 +79,39 @@ const zhcnReader : TranslateReader = {
   }
 }
 
+const zhcnaiReader : TranslateReader = {
+  language : 'zhcnai',
+  url : 'https://raw.githubusercontent.com/huang207/WDS-Translation-Csv-AI/main',
+  async read(epId) : Promise<IEpisodeTranslateModel | undefined> {
+    let source = `${this.url}/TranslationCsv/${epId}.csv`;
+    const records = await loadCsv<IEpisodeTranslateDetail>(source);
+    const TLdetail : IEpisodeTranslateModel = {
+      translateDetail : records.filter((record) => record.Phrase) as IEpisodeTranslateDetail[],
+    }
+    for(let record of records.filter((record) => !record.Phrase)) {
+      if(record.Id.toLowerCase() === 'translator'){
+        TLdetail.translator = record.SpeakerName;
+      }
+      if(record.Id.toLowerCase() === 'proofreader'){
+        TLdetail.proofreader = record.SpeakerName;
+      }
+      if(record.Id.toLowerCase() === 'title' || record.Id.toLowerCase() === 'tltitle'){
+        TLdetail.TLTitle = record.SpeakerName;
+      }
+      if(record.Id.toLowerCase() === 'info'){
+        TLdetail.info = record.SpeakerName;
+      }
+    }
+    return records.length > 1 ? TLdetail : void 0;
+  }
+}
+  
 export class TranslationController {
 
   protected readonly _TLReaderMap : Map<string, TranslateReader> = new Map([
     // [ENReader.language, ENReader],
     [zhcnReader.language, zhcnReader],
+    [zhcnaiReader.language, zhcnaiReader],
   ]);
   protected _translateModel: IEpisodeTranslateModel | undefined;
   protected _hasTranslate = false;
