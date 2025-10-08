@@ -1,10 +1,10 @@
-import { Sprite, Container, Text, TextStyle, NineSlicePlane, Texture } from 'pixi.js';
+import { Sprite, Container, Text, Texture, NineSliceSprite  } from 'pixi.js';
 import { Tween } from 'tweedle.js';
-import { IView } from "../types/View";
+import { episodeExecutable, IView } from "../types/View";
 import { IEpisodeText } from "../types/Episode";
 import { baseAssets } from '../constant/advConstant';
 
-export class TextView extends IView {
+export class TextView extends IView implements episodeExecutable{
 
     protected _textPanelContainer = new Container();
     protected _sprakerText : Text;
@@ -27,62 +27,73 @@ export class TextView extends IView {
         this._textPanelContainer.alpha = 0;
 
         //phrase text background
-        const TextBoxWidth = 1628;
-        const TextBoxHeight = 248;
-        const panel_texture = Texture.from(baseAssets.serif_window_bg);
-        const PhraseTextBox = new NineSlicePlane(panel_texture, 68, 120, 68, 120);
-        this._textPanelContainer.width = TextBoxWidth;
-        this._textPanelContainer.height = TextBoxHeight;
-        this._textPanelContainer.x = (1920 - TextBoxWidth) / 2;
-        this._textPanelContainer.y = 808 //(1080 / 2) + ((PhraseTextBox.height / 2) + 148);
+        const panel_texture = Texture.from(baseAssets.serif_window_bg)
+        const PhraseTextBox = new NineSliceSprite({
+            texture : panel_texture,
+            leftWidth : 68,
+            topHeight : 100,
+            rightWidth : 68,
+            bottomHeight : 100,
+            width : 1628,
+            height : 248
+        });
         this._textPanelContainer.addChild(PhraseTextBox);
-        PhraseTextBox.width = TextBoxWidth;
-        PhraseTextBox.height = TextBoxHeight;
+        this._textPanelContainer.x = (1920 - PhraseTextBox.width) / 2;
+        this._textPanelContainer.y = 808 //(1080 / 2) + ((PhraseTextBox.height / 2) + 148);
 
         //phrase text
-        this._phrase = new Text('', new TextStyle({
-            fill: "#4a424b",
-            fontFamily : 'Ronowstd Gbs',
-            fontSize : 40,
-            leading: 4,
-            lineHeight : 50,
-            letterSpacing: -1,
-        }));
+        this._phrase = new Text({
+            text : '', 
+            style : {
+                fill: "#4a424b",
+                fontFamily : 'Ronowstd Gbs',
+                fontSize : 40,
+                leading: 4,
+                lineHeight : 50,
+                letterSpacing: -1.1,
+            }
+        });
         this._textPanelContainer.addChild(this._phrase);
         this._phrase.x = 93.5;
-        this._phrase.y = 76;
+        this._phrase.y = 75;
 
         //spraker background
         const namePanelWidth = 400;
         const namePanelHeight = 80;
         const name_panel_texture = Texture.from(baseAssets.name_bg)
-        const namePanelContainer = new Container();
-        const name_bg = new NineSlicePlane(name_panel_texture, 56, 0, 19, 62);
-        this._textPanelContainer.addChild(namePanelContainer);
-        namePanelContainer.width = namePanelWidth;
-        namePanelContainer.height = namePanelHeight;
-        namePanelContainer.x = 188 - (namePanelWidth / 2);
-        namePanelContainer.y = -20;
-        namePanelContainer.addChild(name_bg);
-        name_bg.width = namePanelWidth;
-        name_bg.height = namePanelHeight;
+        const name_bg = new NineSliceSprite({
+            texture : name_panel_texture,
+            leftWidth : 75,
+            topHeight : 0,
+            rightWidth : 70,
+            bottomHeight : 0,
+            width : 400,
+            height : 80
+        });
+        this._textPanelContainer.addChild(name_bg);
+        name_bg.x = 188 - (name_bg.width / 2);
+        name_bg.y = -20;
 
         //spraker label
-        this._sprakerText = new Text('', new TextStyle({
-            fill: "#ffffff",
-            fontFamily : 'Ronowstd Gbs',
-            fontSize : 40,
-            letterSpacing: -1,
-            // fontVariant : 'small-caps'
-        }));
-        namePanelContainer.addChild(this._sprakerText);
+        this._sprakerText = new Text({
+            text : '', 
+            style : {
+                fill: "#ffffff",
+                fontFamily : 'Ronowstd Gbs',
+                fontSize : 40,
+                letterSpacing: -1,
+                // fontVariant : 'small-caps'
+            }
+        });
+        this._textPanelContainer.addChild(this._sprakerText);
         this._sprakerText.anchor.set(0.5);
-        this._sprakerText.x = 200;
-        this._sprakerText.y = 30;
+        this._sprakerText.x = 188;
+        this._sprakerText.y = 10;
+
 
         //nextIcon
         this._nextIcon = Sprite.from(baseAssets.icon_next);
-        this._textPanelContainer.addChild(this._nextIcon)
+        this._textPanelContainer.addChild(this._nextIcon);
         this._nextIcon.anchor.set(.5);
         this._nextIcon.position.set(1566, 195); //to 210
         this._nextIcon.alpha = 0;
@@ -115,15 +126,6 @@ export class TextView extends IView {
             return;
         }
 
-        if(TLPhrase || TLSpeakerName){
-            this._currenttext = { 
-                SpeakerName, 
-                TLSpeakerName, 
-                Phrase: Order > 1 ? `${this._currenttext.Phrase}\n${Phrase}` : Phrase, 
-                TLPhrase: Order > 1 ? `${this._currenttext.TLPhrase}\n${TLPhrase}` : TLPhrase
-            };
-        }
-
         if(this._textPanelContainer.alpha === 0){
             this.showTextPanelAnimation();
             // this.showTextPanel();
@@ -140,7 +142,16 @@ export class TextView extends IView {
         
         //phrase text
         this._phrase.style.fontFamily = (this._isTranslate ? this._fontFamilies[1] : this._fontFamilies[0]) || this._fontFamilies[0];
-        this._phrase.text = Order > 1 ? `${this._phrase.text}\n` : '';
+        const prevPhrase = (this._isTranslate ? this._currenttext.TLPhrase : this._currenttext.Phrase) || '';
+        this._phrase.text = Order > 1 ? `${prevPhrase}\n` : '';
+
+        //store current text
+        this._currenttext = { 
+            SpeakerName, 
+            TLSpeakerName, 
+            Phrase: Order > 1 ? `${this._currenttext.Phrase}\n${Phrase}` : Phrase, 
+            TLPhrase: Order > 1 ? `${this._currenttext.TLPhrase}\n${TLPhrase}` : TLPhrase
+        };
 
         this._typingTotalDuration = Phrase.length * 50 + 500;
 

@@ -1,6 +1,6 @@
-import { Container, Assets } from "pixi.js";
-import { IView } from "../types/View";
-import { IEpisodeCharacter, IEpisodeDetailCharacterMotion } from "../types/Episode";
+import { Container } from "pixi.js";
+import { episodeExecutable, IView } from "../types/View";
+import { IEpisodeCharacter, IEpisodeUnitCharacterMotion } from "../types/Episode";
 import { characterAnimation, AdventureAnimationStandCharacter } from '../object/characterSpineModel'
 // constant
 import LipSynParameters from "../constant/LipSync";
@@ -15,7 +15,7 @@ interface motionCharacterRecord {
     character : AdventureAnimationStandCharacter | undefined;
 }
 
-export class CharacterView extends IView {
+export class CharacterView extends IView implements episodeExecutable{
     
     //constant
     protected readonly _lipMotionParameters = LipSynParameters;
@@ -56,10 +56,12 @@ export class CharacterView extends IView {
         }
 
         this.offAllLipSync();
-        this._prevCharacters = [...this._motionCharacters];
+        // 把相同的slotNumber覆蓋掉 或者 增加紀錄
+        // this._prevCharacters = [...this._motionCharacters];
+        this._prevCharacters = [...this._prevCharacters.filter(item => !this._motionCharacters.some(bItem => bItem.slotNumber === item.slotNumber)), ...this._motionCharacters];
         this._motionCharacters = [];
 
-        CharacterMotions.forEach((motiondata : IEpisodeDetailCharacterMotion)=>{
+        CharacterMotions.forEach((motiondata : IEpisodeUnitCharacterMotion)=>{
 
             let model : AdventureAnimationStandCharacter | undefined = undefined;
 
@@ -130,6 +132,19 @@ export class CharacterView extends IView {
         let uselessCharacters = this._prevCharacters.filter(prev => !this._motionCharacters.some(data => data.spineId == prev.spineId))
         uselessCharacters.forEach(record => record.character?.hideCharacter());
 
+    }
+
+    // 預先準備character model
+    preCreateCharacterModel(epcharacter? : IEpisodeCharacter){
+        if(!epcharacter) return;
+        epcharacter.CharacterMotions.forEach((motiondata : IEpisodeUnitCharacterMotion)=>{
+            if((!this._standCharacters.has(`${motiondata.SpineId}`)) && motiondata.SpineId != 0){
+                let model = new AdventureAnimationStandCharacter(motiondata.SpineId)
+                model.visible = false;
+                model.addTo(this);
+                this._standCharacters.set(`${motiondata.SpineId}`, model)
+            }
+        })
     }
 
     //隱藏在場上的

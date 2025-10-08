@@ -1,29 +1,27 @@
-//https://github.com/karai17/awesome-love-shaders/blob/master/sepia/sepia.glsl
-//https://github.com/nical/GLSL-Raymarching/blob/master/src/shaders/Sepia.frag
 import { Sprite, Texture, ObservablePoint } from "pixi.js";
 import { Tween } from "tweedle.js";
-import { IView } from "../types/View";
-import { IEpisodeEffect, IEpisodeFade, WindowEffects } from "../types/Episode";
+import { episodeExecutable, IView } from "../types/View";
+import { IEpisodeBackground, IEpisodeEffect, IEpisodeFade, WindowEffects } from "../types/Episode";
 import { baseAssets } from "../constant/advConstant";
 
-export class EffectView extends IView {
+export class EffectView extends IView implements episodeExecutable{
 
     // protected _canvasGroup : Container | undefined
     protected _sepiaEffectObject : Sprite;
     protected _whiteBlurEffectObject : Sprite;
-    // protected _blur_filter : BlurFilter;
-    // protected _sepia_filter : Filter;
-    protected _whiteBlurEffectAnimation : Tween<ObservablePoint<any>>
+    protected _whiteBlurEffectAnimation : Tween<ObservablePoint>
+
+    protected _currentBG : string | undefined;
+    protected _nextShouldHide : boolean = false;
 
     constructor(){
         super()
 
         this.sortableChildren = true;
         
-        // sepia setting 顏色不確定!!!
-        // this._sepia_filter = new Filter(undefined, fragmentShader);
-        // this.filters = [this._sepia_filter];
-        // this._sepia_filter.enabled = false;
+        // sepia effect的顏色不確定!!!
+        // 正常來說應該是用shader來做的 但會有lag問題 + 圖層問題
+        // 所以暫時用圖片來做
         this._sepiaEffectObject = new Sprite(Texture.from(baseAssets.sepia));
         this._sepiaEffectObject.width = 1920;
         this._sepiaEffectObject.height = 1080;
@@ -32,14 +30,6 @@ export class EffectView extends IView {
         this.addChild(this._sepiaEffectObject);
         this._sepiaEffectObject.visible = false;
 
-        // //white blur edge effect setting
-        // this._whiteBlurEffectObject = new Graphics();
-        // this._whiteBlurEffectObject.zIndex = 20;
-        // this._whiteBlurEffectObject.lineStyle(90, 0xffffff);
-        // this._whiteBlurEffectObject.drawRect(0, 0, 1920, 1080);
-        // this._whiteBlurEffectObject.visible = false;
-        // this.addChild(this._whiteBlurEffectObject)
-
         //用圖片做white blur edge effect
         this._whiteBlurEffectObject = new Sprite(Texture.from(baseAssets.whiteBlur));
         this._whiteBlurEffectObject.anchor.set(0.5);
@@ -47,15 +37,7 @@ export class EffectView extends IView {
         this._whiteBlurEffectObject.zIndex = 20;
         this._whiteBlurEffectObject.visible = false;
         this.addChild(this._whiteBlurEffectObject);
-
-        // //blur filter setting
-        // this._blur_filter = new BlurFilter();
-        // this._whiteBlurEffectObject.filters = [this._blur_filter];
-        // this._blur_filter.enabled = false;
-        // this._blur_filter.blur = 60;
-        // this._blur_filter.quality = 20;
         
-        // this._whiteBlurEffectAnimation = new Tween(this._blur_filter.uniforms).to({blur : 80}, 2000).yoyo(true).repeat();
         this._whiteBlurEffectAnimation = new Tween(this._whiteBlurEffectObject.scale).to({x : 1.025, y : 1.025}, 2000).yoyo(true).repeat();
     }
     
@@ -63,23 +45,24 @@ export class EffectView extends IView {
         if(this._sepiaEffectObject.visible){
             this._sepiaEffectObject.visible = false;
         }
-        // this._sepia_filter.enabled = false;
-        // this.filters = [];
-
         if(this._whiteBlurEffectObject.visible){
             this._whiteBlurEffectObject.visible = false;
-            // this._blur_filter.enabled = false;
             this._whiteBlurEffectAnimation.stop();
         }
     }
 
     execute({ 
-        Effect, 
+        BackgroundImageFileName,
+        Effect,
         WindowEffect,
         BackgroundImageFileFadeType,
         FadeValue1 = 0,
-    } : IEpisodeEffect & IEpisodeFade) :  (() => Promise<void>) | undefined {
+    } : IEpisodeEffect & IEpisodeFade & IEpisodeBackground) :  (() => Promise<void>) | undefined {
         
+        if(BackgroundImageFileName){
+            this._currentBG = BackgroundImageFileName;
+        }
+
         if(Effect){
             console.log('暫時沒有見過 所以不知道怎樣做!', Effect)
         }
@@ -89,7 +72,7 @@ export class EffectView extends IView {
         if(FadeDuration > 0){
             return () => new Promise<void>((res, _) => {
                 setTimeout(() => {
-                    this._effectControl(WindowEffect);
+                    this._effectControl(WindowEffect, true);
                     res();
                 }, FadeDuration)
             })
@@ -99,18 +82,15 @@ export class EffectView extends IView {
         return;
     }
 
-    _effectControl(WindowEffect? : WindowEffects){
+    _effectControl(WindowEffect? : WindowEffects, isFade : boolean = false){
         // 如果沒有WindowEffect 之前的有顯示的話就隱藏
-        if(!WindowEffect){
+        // 如果有fade animation 並且下一個unit沒有WindowEffect 則隱藏
+        if((!WindowEffect) || (isFade && this._nextShouldHide) ){
             if(this._sepiaEffectObject.visible){
                 this._sepiaEffectObject.visible = false;
             }
-            // if(this._sepia_filter.enabled){
-            //     this._sepia_filter.enabled = false;
-            // }
             if(this._whiteBlurEffectObject.visible){
                 this._whiteBlurEffectObject.visible = false;
-                // this._blur_filter.enabled = false;
                 this._whiteBlurEffectAnimation.stop();
             }
             return;
@@ -120,7 +100,8 @@ export class EffectView extends IView {
         if(WindowEffect){
             switch (WindowEffect){
                 case WindowEffects.Sepia:
-                    if(!this._sepiaEffectObject.visible){
+                    // 黑色背景(1050)不用顯示
+                    if((!this._sepiaEffectObject.visible) && this._currentBG !== "1050"){
                         this._sepiaEffectObject.visible = true;
                     }
                     break;
@@ -131,6 +112,7 @@ export class EffectView extends IView {
                     }
                     break;
             }
+            return;
         }
     }
 
@@ -142,8 +124,21 @@ export class EffectView extends IView {
         return this._whiteBlurEffectObject;
     }
 
+    set nextShouldHide(bool : boolean){
+        this._nextShouldHide = bool;
+    }
+
+    get nextShouldHide(){
+        return this._nextShouldHide;
+    }
+
 }
 
+
+// --sepia effext的參考資料--
+
+//https://github.com/karai17/awesome-love-shaders/blob/master/sepia/sepia.glsl
+//https://github.com/nical/GLSL-Raymarching/blob/master/src/shaders/Sepia.frag
 
 // const fragmentShader = `
 //     varying vec2 vTextureCoord;

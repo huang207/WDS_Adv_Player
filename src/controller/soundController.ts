@@ -1,4 +1,4 @@
-import { Assets } from "@pixi/assets";
+import { Assets } from "pixi.js";
 import { IMediaInstance, sound, Sound } from "@pixi/sound";
 import { Tween } from "tweedle.js";
 import { IEpisodeSound } from "../types/Episode";
@@ -110,7 +110,7 @@ export class SoundController {
       this._voiceDuration = Math.max(3000, this._voiceDuration);
       setTimeout(() => {
         this._onVoiceEnd?.();
-        this._onVoiceEnd = void 0;
+        // this._onVoiceEnd = void 0;
       }, 5000);
 
       return;
@@ -126,7 +126,7 @@ export class SoundController {
       let instance = this._currentVoice?.play();
       (instance as IMediaInstance).once("end", () => {
         this._onVoiceEnd?.();
-        this._onVoiceEnd = void 0;
+        // this._onVoiceEnd = void 0;
         this._currentVoice = null;
       });
     }

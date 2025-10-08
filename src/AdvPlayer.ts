@@ -1,6 +1,4 @@
-import { Container, FederatedPointerEvent, Assets, Ticker} from "pixi.js";
-import "@pixi/sound";
-// import { Group } from 'tweedle.js';
+import { Container, FederatedPointerEvent, Assets } from "pixi.js";
 //type
 import { IEpisodeModel } from "./types/Episode";
 //views
@@ -18,27 +16,29 @@ import { CoverOpening } from "./object/coverOpening";
 import { SoundController } from "./controller/soundController";
 import { TranslationController } from "./controller/translationController";
 //constant
-import { baseAssets, Layer, TLFonts } from "./constant/advConstant";
+import './constant/translationReader';
+import { baseAssets, Layer } from "./constant/advConstant";
 //utils
 import { checkImplements, isURL } from "./utils/check";
 import { createEmptySprite } from "./utils/emptySprite";
 import { resPath } from "./utils/resPath";
-import { loadJson, loadResourcesFromEpisode } from './utils/loadResources'
+import { loadJson, loadResourcesFromEpisode, loadPlayerAssetsBundle } from './utils/loadResources'
 import { banner, TrackLog } from "./utils/logger";
 
-export class AdvPlayer extends Container {
+export class AdvPlayer extends Container<any> {
   //init
+  protected _inited : boolean = false;
   protected _loadPromise: Promise<any> | undefined;
   //View
-  protected _backgroundView: BackgroundView;
-  protected _characterView: CharacterView;
-  protected _effectView: EffectView;
-  protected _textView: TextView;
-  protected _movieView: MovieView;
-  protected _fadeView : FadeView;
+  protected _backgroundView!: BackgroundView;
+  protected _characterView!: CharacterView;
+  protected _effectView!: EffectView;
+  protected _textView!: TextView;
+  protected _movieView!: MovieView;
+  protected _fadeView! : FadeView;
   // protected _historyView: HistoryView;
-  protected _uiView: UIView;
-  protected _coverOpening: CoverOpening;
+  protected _uiView!: UIView;
+  protected _coverOpening!: CoverOpening;
   // Controller
   protected _soundController: SoundController = new SoundController();
   protected _translationController: TranslationController = new TranslationController();
@@ -49,7 +49,6 @@ export class AdvPlayer extends Container {
   protected _isAuto: boolean = false;
   protected _isVoice: boolean = true;
   protected _isAdventureEnded: boolean = false;
-  // protected _processing: Promise<any>[] = [];
   protected _processing: (()=>Promise<any>)[] = [];
   protected _trackPromise: Promise<boolean> | undefined;
 
@@ -58,20 +57,31 @@ export class AdvPlayer extends Container {
   constructor() {
     super();
 
-    //spine pma setting
-    Assets.setPreferences({
-      preferCreateImageBitmap: false,
-    });
-
     //advPlayer setting
-    this.addChild(createEmptySprite({ empty : true, color: 0x00dd00 }));
+    this.addChild(createEmptySprite({ empty : true, color: 0x000000 }));
     this.sortableChildren = true;
     this.eventMode = "static";
     document.addEventListener("visibilitychange", this._handleVisibilityChange);
 
+    //log
+    banner();
+  }
+
+  public static async create<C extends Container>(pixiapp? : C): Promise<AdvPlayer> {
+    const self = new this();
+    if(pixiapp){
+      self.addTo(pixiapp);
+    }
+    await self.init();
+    return self;
+  }
+
+  public async init(){
+    await loadPlayerAssetsBundle('baseAssets', baseAssets);
+
     //views
     this._uiView = new UIView().addTo(this, Layer.UILayer);
-    // this._historyView = new HistoryView().addTo(this, Layer.HistroyLayer);
+    // // this._historyView = new HistoryView().addTo(this, Layer.HistroyLayer);
     this._fadeView = new FadeView().addTo(this, Layer.FadeLayer);
     this._movieView = new MovieView().addTo(this, Layer.MovieLayer);
     this._textView = new TextView().addTo(this, Layer.TextLayer);
@@ -81,10 +91,10 @@ export class AdvPlayer extends Container {
 
     //Cover
     this._coverOpening = CoverOpening.new().addTo(this, Layer.CoverLayer);
-    
-    //ui button setting
+
+    // //ui button setting
     this._uiView.AutoBtn.addclickFun(() => {
-      this._isAuto = this._uiView.AutoBtn.Pressed;
+      this._isAuto = this._uiView!.AutoBtn.Pressed;
       if(this._trackPromise && this._isAuto){
         this._trackPromise = this._trackPromise.then((
           previous_then_not_execute : boolean
@@ -101,12 +111,7 @@ export class AdvPlayer extends Container {
       }
     });
 
-    //log
-    banner();
-  }
-
-  public static create() {
-    return new this();
+    this._inited = true;
   }
 
   public addTo<C extends Container>(parent: C): AdvPlayer {
@@ -143,18 +148,14 @@ export class AdvPlayer extends Container {
           source = resPath.advJson(source);
         }
         source = await loadJson<IEpisodeModel>(source).catch(() => {
-          this._coverOpening.error("The episode ID or URL is not correct, please re-confirm.");
+          this._coverOpening?.error("The episode ID or URL is not correct, please re-confirm.");
           throw new Error("The episode ID or URL is not correct, please re-confirm.");
         });
       }
 
       if (!checkImplements<IEpisodeModel>(source)) {
-        this._coverOpening.error("Episode file format error.");
+        this._coverOpening?.error("Episode file format error.");
         throw new Error("Episode file format error.");
-      }
-
-      if (!Assets.cache.has(baseAssets.font)) {
-        await Assets.load(baseAssets.font);
       }
 
       if (this._episode) {
@@ -163,20 +164,20 @@ export class AdvPlayer extends Container {
 
       //如果有翻譯語言 就load該語言的翻譯文件
       if(translate){
-        await this._translationController.load({
+        let hasTranslate = await this._translationController.load({
           EpId : source.EpisodeId,
           loadParser : translate,
         });
         //如果有翻譯文件 ui配置&load font asset
-        if(this._translationController.hasTranslate){
+        if(hasTranslate){
           this._uiView.enableTLBtn();
-          this._textView.isTranslate = this._translationController.hasTranslate;
+          this._textView.isTranslate = hasTranslate;
           this._uiView.TranslateBtn.addclickFun(()=>{
             this._textView.isTranslate = this._uiView.TranslateBtn.Pressed;
             this._textView.toggleTextContent();
           })
           //font asset 
-          const TLfont = TLFonts.find(font => font.language === translate);
+          const TLfont = this._translationController.getFont();
           if(TLfont){
             this._textView.addFontFamily(TLfont.family);
             this._coverOpening.addFontFamily(TLfont.family);
@@ -189,12 +190,14 @@ export class AdvPlayer extends Container {
       }
       
       this._episode = source as IEpisodeModel;
-      this._coverOpening.init({
+      this._coverOpening?.init({
           type: this._episode.StoryType,
           chapter: this._episode.Chapter,
           title: this._episode.Title,
           order: this._episode.Order,
           TLTitle : this._translationController.translateModel?.TLTitle,
+          TLChapter : this._translationController.translateModel?.TLChapter,
+          
           info : this._translationController.translateModel?.info
       });
 
@@ -202,9 +205,9 @@ export class AdvPlayer extends Container {
       await loadResourcesFromEpisode(
         source, 
         this._isVoice, 
-        (percentage) => this._coverOpening.progress(Math.floor(percentage * 100))
+        (percentage) => this._coverOpening?.progress(Math.floor(percentage * 100))
       )
-      .catch(() => this._coverOpening.error());
+      .catch(() => this._coverOpening?.error());
       
       res(this._episode);
     }));
@@ -238,12 +241,12 @@ export class AdvPlayer extends Container {
         this._play();
       },3000);
     } else {
-      this._coverOpening.once("pointertap", this._play, this);
+      this._coverOpening?.once("pointertap", this._play, this);
     }
 }
 
   protected _play() {
-    this._coverOpening.close(()=>{
+    this._coverOpening?.close(()=>{
       setTimeout(() => {
         //set click event
         this.on("pointertap", this._tap, this);
@@ -253,11 +256,11 @@ export class AdvPlayer extends Container {
 
     //ui view showing
     if(this._isAuto){
-      this._uiView.AutoBtn.Pressed = this._isAuto;
-      this._uiView.hide();
+      this._uiView!.AutoBtn.Pressed = this._isAuto;
+      this._uiView!.hide();
     }
     else{
-      this._uiView.alpha = 1;
+      this._uiView!.alpha = 1;
     }
     
     this._preRenderFrame();
@@ -268,10 +271,18 @@ export class AdvPlayer extends Container {
     return this.currentTrack;
   }
 
+  // public seek(order : number){
+  //   if(!this._episode) return;
+  //   if(order < 0 || order >= this._episode.EpisodeDetail.length) return;
+  // }
+
   protected async _preRenderFrame(){
     if(this._currentIndex != 0 || !this.currentTrack) return;
+    this._characterView.preCreateCharacterModel(this.currentTrack);
     this._effectView.execute(this.currentTrack);
     this._backgroundView.execute(this.currentTrack);
+    //當播完聲音後 停止spine的口部動作
+    this._soundController.onVoiceEnd = this._characterView.offAllLipSync.bind(this._characterView);
   }
 
   protected async _renderFrame() {
@@ -306,6 +317,8 @@ export class AdvPlayer extends Container {
     //第一次無須執行 preRenderFrame已經處理過 
     if(index > 0){
       //effect處理
+      //檢查下一個unit是否需要隱藏WindowEffect
+      this._effectView.nextShouldHide = !this.nextTrack?.WindowEffect;
       let effect_process = this._effectView.execute(this.currentTrack);
       if(!!effect_process){
         this._processing.push(effect_process);
@@ -357,14 +370,12 @@ export class AdvPlayer extends Container {
     this._textView.allowNextIconDisplay = !isSameGroup; //如果是同組就不顯示小三角形圖標
     this._textView.execute(this.currentTrack);
 
-    //當播完聲音後 停止spine的口部動作
-    this._soundController.onVoiceEnd = () => this._characterView.offAllLipSync();
-  
     //聲音處理
     this._soundController.voice(this.currentTrack);
 
     //準備下一個unit
     this._next();
+    this._characterView.preCreateCharacterModel(this.currentTrack);
 
     // 計算等候時間
     let duration = Math.max(
@@ -407,7 +418,6 @@ export class AdvPlayer extends Container {
           res(true);
         }, duration);
       }));
-
     }
 
     // 如果不是auto 就return
@@ -424,7 +434,7 @@ export class AdvPlayer extends Container {
   protected _onBlur() {
     if (this._isAuto && document.hidden) {
       this._isAuto = false;
-      this._uiView.AutoBtn.Pressed = false;
+      this._uiView!.AutoBtn.Pressed = false;
     }
   }
 
@@ -443,7 +453,7 @@ export class AdvPlayer extends Container {
   protected _autoLock(autoString? : string){
     if(autoString?.toLocaleLowerCase() != 'true') return;
     this._isAuto = true;
-    this._coverOpening.setAuto(true);
+    this._coverOpening?.setAuto(true);
     document.removeEventListener("visibilitychange", this._handleVisibilityChange);
   }
 
@@ -452,7 +462,9 @@ export class AdvPlayer extends Container {
   }
 
   get currentTrack() {
-    return this._episode?.EpisodeDetail[this._currentIndex];
+    return this._currentIndex >= (this._episode?.EpisodeDetail.length ?? 0)
+      ? void 0
+      : this._episode?.EpisodeDetail[this._currentIndex];
   }
 
   get nextTrack() {

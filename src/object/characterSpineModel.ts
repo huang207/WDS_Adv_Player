@@ -1,5 +1,5 @@
 import { Container } from "pixi.js";
-import { Spine } from '@esotericsoftware/spine-pixi-v7';
+import { Spine } from '@esotericsoftware/spine-pixi-v8';
 import { CharacterAppearanceTypes, CharacterPositions } from "../types/Episode";
 import LoopMotion from "../constant/LoopMotion";
 import ChangeBodyMotion from "../constant/ChangeBodyMotion";
@@ -40,8 +40,11 @@ export class AdventureAnimationStandCharacter {
         this._spineId = spineId;
         this._charId = `${this._spineId}`.slice(0, 3);
         //create spine model
-        this._model = Spine.from(`spine_${spineId}`, `spine_atlas_${spineId}`);
-        this._model.name = this._charId;
+        this._model = Spine.from({
+            skeleton : `spine_${spineId}`,
+            atlas : `spine_atlas_${spineId}`
+        });
+        this._model.label = this._charId;
         this._loopMotionData = LoopMotion.find((lm) => lm.TargetCharacterBaseId === this._charId);
         this._model.state.setAnimation(0, "breath", true);
         if (this._model.state.tracks[0] != null) {
@@ -129,8 +132,8 @@ export class AdventureAnimationStandCharacter {
             let motion = ChangeBodyMotion.find(({BeforeMotionName, AfterMotionName}) => BeforeMotionName == this._motions.bodyAnimationName && AfterMotionName == bodyAnimationName);
             // esoteric官方的mixDuration必须在第一次update前设置才可以生效，这里关闭autoUpdate，设置完mixDuration后再打开
             this._model.autoUpdate = false;
-            let entry = this._model.state.setAnimation(1, bodyAnimationName, false);
-            entry.mixDuration = motion ? motion.Second : 0.2;
+            let entry = this._model.state.setAnimation(1, bodyAnimationName, false)
+            entry.mixDuration = motion ? motion.Second : 0.3;
             this._model.update(0);
             this._model.autoUpdate = true;
         }
@@ -246,4 +249,11 @@ export class AdventureAnimationStandCharacter {
         return this._spineId;
     }
 
+    set visible(bool : boolean){
+        this._model.visible = bool;
+    }
+
+    get visible(){
+        return this._model.visible;
+    }
 }
