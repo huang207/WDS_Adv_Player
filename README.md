@@ -23,6 +23,7 @@ A self-made adventure Player to render the stories for game [ワールドダイ�
 |id  | Story Id | |
 |tl  | Translate language | [#](https://github.com/Cpk0521/WDS_Adv_Player?tab=readme-ov-file#translation) |
 |at  | Lock in Auto play Mode | true |
+|sv  | Save video record | true |
 |renderer  | Renderer Type | `webgl`, `webgpu` |
 
 Example : 
@@ -30,6 +31,7 @@ Example :
  - `https://cpk0521.github.io/WDS_Adv_Player/?id=2006008&tl=zhai`
  - `https://cpk0521.github.io/WDS_Adv_Player/?renderer=webgl`
  - `https://cpk0521.github.io/WDS_Adv_Player/?at=true`
+ - `https://cpk0521.github.io/WDS_Adv_Player/?at=true&sv=true`
 
 ## Translation
 
@@ -55,7 +57,11 @@ Or you can create a new TranslateReader in [translationReader.ts](./src/constant
   };
   TranslationController.addReader(Reader); // Add the reader to the controller
   ```
-  
+
+## Audio record when save video
+
+Because there is no api for capturing audio from tab output and `MediaRecorder` does not support change stream during recording, global audio is needed for audio recording. Select any window or screen and **check `Also share system audio`** when browser prompt.
+
 ## Quick Start
 
 ```shell
