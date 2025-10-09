@@ -2,7 +2,6 @@ import { Container, FederatedPointerEvent, Sprite, Texture } from "pixi.js";
 
 export class UIButton extends Container {
 
-    protected _button_bg : Sprite;
     protected _content : Sprite;
     protected _base_sprite : Sprite;
     protected _base_bg : Texture;
