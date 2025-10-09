@@ -13,6 +13,7 @@ import { UIView } from "./views/UIView";
 //
 import { CoverOpening } from "./object/coverOpening";
 //manager
+import { IRecordController } from "./controller/recordController";
 import { SoundController } from "./controller/soundController";
 import { TranslationController } from "./controller/translationController";
 //constant
@@ -52,8 +53,8 @@ export class AdvPlayer extends Container<any> {
   protected _processing: (()=>Promise<any>)[] = [];
   protected _trackPromise: Promise<boolean> | undefined;
   // recorder
-  protected _isSaveVideo: Boolean = false;
-  protected _recorder: MediaRecorder | undefined;
+  protected _isRecord: Boolean = false;
+  protected _recorder: IRecordController | undefined;
 
   protected _handleVisibilityChange = this._onBlur.bind(this);
 
@@ -122,7 +123,7 @@ export class AdvPlayer extends Container<any> {
     return this;
   }
 
-  public setRecorder(recorder: MediaRecorder) {
+  public setRecorder(recorder?: IRecordController) {
     this._recorder = recorder;
   }
 
@@ -224,9 +225,9 @@ export class AdvPlayer extends Container<any> {
     source: string | IEpisodeModel,
     translate?: string,
     auto?: string,
-    save?: string
+    record?: string
   ) {
-    this._isSaveVideo = (save?.toLowerCase() === 'true');
+    this._isRecord = (record?.toLowerCase() === 'true');
     this._autoLock(auto);
     this.load(source, translate).then(() => this._onready());
   }
@@ -244,7 +245,7 @@ export class AdvPlayer extends Container<any> {
       return;
     }
     this._loadPromise = void 0;
-    if (this._isSaveVideo) {
+    if (this._isRecord) {
       this._recorder?.start();
     }
     //cover
@@ -304,7 +305,7 @@ export class AdvPlayer extends Container<any> {
     let index = this._currentIndex;
     // 完結了 或 找不到當前的Track
     if (!this.currentTrack) {
-      if (this._isSaveVideo) {
+      if (this._isRecord) {
         this._recorder?.stop();
       }
       return;

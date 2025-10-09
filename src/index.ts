@@ -1,8 +1,9 @@
 import { getUrlParams } from "./utils/UrlParams";
 import { AdvPlayer } from "./AdvPlayer";
 import { createApp } from "./utils/createApp";
+import { IRecordController, MediaRecorderController, OBSController } from "./controller/recordController";
 
-const { id, tl, at, sv, renderer } = getUrlParams();
+const { id, tl, at, sv, rc, obsurl, obspass, renderer } = getUrlParams();
 
 const app = await createApp(<'webgl' | 'webgpu'> renderer);
 // const iFrameDetection = (window === window.parent);
@@ -17,30 +18,33 @@ const advplayer = await AdvPlayer.create(app.stage);
 let _id = id ?? prompt("Please enter the story Id", "1000000");
 
 if (sv && sv.toLowerCase() === 'true') {
-  const stream = app.canvas.captureStream(30); // 每秒30帧
-  let captureStream;
-  try {
-    captureStream = await navigator.mediaDevices.getDisplayMedia({ audio: true });
-    captureStream.getAudioTracks().forEach(element => {
-      stream.addTrack(element);
-    });
-  } catch (error) {
-    alert("Failed to capture audio: " + (error instanceof Error ? error.message : error));
+  let recordController: IRecordController | undefined;
+
+  switch (rc?.toLowerCase()) {
+    case 'obs':
+      if (obsurl) {
+        recordController = await OBSController.create(obsurl, obspass);
+      }
+      break;
+    case 'mediarecorder':
+    case 'mr':
+    case '':
+    case undefined:
+    default:
+      // default
+      recordController = MediaRecorderController.create(
+        app.canvas.captureStream(24),
+        await navigator.mediaDevices.getDisplayMedia({ audio: true })
+      );
+      break;
   }
-  const recorder = new MediaRecorder(stream);
 
-  recorder.ondataavailable = (e) => {
-    const videoBlob = new Blob([e.data], { type: 'video/webm' });
-    const videoURL = URL.createObjectURL(videoBlob);
-    console.log(videoURL); // 视频文件URL，可用于下载或播放
-    const fileName = `wds_adv_record_${_id}${tl ? `_${tl}` : ''}_${new Date().valueOf()}.mkv`;
-    const link = document.createElement('a');
-    link.href = videoURL;
-    link.download = fileName;
-    link.click();
-  };
-
-  advplayer.setRecorder(recorder);
+  if (recordController) {
+    if (typeof recordController.setFileName === "function") {
+      recordController.setFileName(`wds_adv_record_${_id}${tl ? `_${tl}` : ''}_${new Date().valueOf()}.mkv`);
+    }
+    advplayer.setRecorder(recordController);
+  }
 }
 
 _id && advplayer.loadAndPlay(_id, tl, at, sv);
