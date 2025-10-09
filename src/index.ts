@@ -18,10 +18,15 @@ let _id = id ?? prompt("Please enter the story Id", "1000000");
 
 if (sv && sv.toLowerCase() === 'true') {
   const stream = app.canvas.captureStream(30); // 每秒30帧
-  let captureStream = navigator.mediaDevices.getDisplayMedia({ audio: true });
-  (await captureStream).getAudioTracks().forEach(element => {
-    stream.addTrack(element);
-  });
+  let captureStream;
+  try {
+    captureStream = await navigator.mediaDevices.getDisplayMedia({ audio: true });
+    captureStream.getAudioTracks().forEach(element => {
+      stream.addTrack(element);
+    });
+  } catch (error) {
+    alert("Failed to capture audio: " + (error instanceof Error ? error.message : error));
+  }
   const recorder = new MediaRecorder(stream);
 
   recorder.ondataavailable = (e) => {
